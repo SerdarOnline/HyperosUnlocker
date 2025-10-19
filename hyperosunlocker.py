@@ -172,7 +172,7 @@ class HTTP11Session:
             
             return response
         except Exception as e:
-            print(f"[Error сети] {e}")
+            print(f"[Netwrok Error] {e}")
             return None
  
 def main():
