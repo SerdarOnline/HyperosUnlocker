@@ -221,7 +221,7 @@ def main():
                             check_unlock_status(session, cookie_value, device_id)
                         elif apply_result == 3:
                             deadline_format = data.get("deadline_format", "Not declared")
-                            print(col_g + f"[Status]: " + Fore.RESET + f"Request quote reached. Try again at {deadline_format} (Month/Day).")
+                            print(col_g + f"[Status]: " + Fore.RESET + f"Request quota reached. Try again at {deadline_format} (Month/Day).")
                             exit()
                         elif apply_result == 4:
                             deadline_format = data.get("deadline_format", "Not declared")
