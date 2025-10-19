@@ -1,6 +1,6 @@
 # Automated HyperOS Bootloader Unlocker
 
-The script reason is for help to "brute force" Xiaomi Community Forum Bootloader Unlock request avoiding request limit quote reaches.
+The script reason is for help to "brute force" Xiaomi Community Forum Bootloader Unlock request avoiding request limit quota reaches.
 
 ## Steps
 1. Install the requirements;
