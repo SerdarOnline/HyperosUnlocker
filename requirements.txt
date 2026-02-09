@@ -1,6 +1,14 @@
-requests
-ntplib
-pytz
-urllib3
-icmplib
-colorama
+# HyperOS Bootloader Unlocker Requirements
+# Copyright © 2026 SerdarOnline
+
+# GUI Framework
+PyQt5==5.15.10
+
+# Web Automation
+selenium==4.16.0
+webdriver-manager==4.0.1
+
+# Network & Time
+urllib3==2.1.0
+ntplib==0.4.0
+pytz==2024.1
