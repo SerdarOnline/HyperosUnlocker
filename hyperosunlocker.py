@@ -193,14 +193,40 @@ def attack_sequence(start_beijing, start_ts):
         print(Colors.YELLOW + "\n⚠️ Tüm denemeler tamamlandı." + Colors.ENDC)
 
 def main():
+    global TOKEN, USER_ID
+    
     # Lisans kontrolü
     _check_author_integrity()
     
     print(Colors.CYAN + "Token ve User ID kontrol ediliyor...")
+    
+    # TOKEN manuel girilmemişse interaktif olarak sor
     if TOKEN == "BURAYA_TOKEN_GELECEK":
-        print(Colors.RED + "❌ HATA: TOKEN değişkenini güncellemeyi unuttunuz!")
-        print(Colors.YELLOW + "Lütfen kodun başındaki TOKEN değişkenine kendi token'ınızı yapıştırın.")
-        sys.exit(1)
+        print(Colors.YELLOW + "\n⚠️ TOKEN ayarlanmamış!")
+        print(Colors.CYAN + "\nSeçenekler:")
+        print("  1. TOKEN'ı şimdi gir (interaktif)")
+        print("  2. GUI versiyonunu kullan (önerilen)")
+        print("  3. Çıkış")
+        
+        choice = input(Colors.BOLD + "\nSeçiminiz (1/2/3): " + Colors.ENDC).strip()
+        
+        if choice == "1":
+            print(Colors.CYAN + "\n📝 TOKEN ve User ID girişi:")
+            TOKEN = input("  Token (new_bbs_serviceToken): ").strip()
+            USER_ID = input("  User ID (userId): ").strip()
+            
+            if not TOKEN or not USER_ID:
+                print(Colors.RED + "❌ TOKEN ve User ID boş bırakılamaz!")
+                sys.exit(1)
+            
+            print(Colors.GREEN + "✅ TOKEN başarıyla ayarlandı.")
+        elif choice == "2":
+            print(Colors.CYAN + "\n💡 GUI versiyonunu başlatmak için:")
+            print(Colors.GREEN + "   python hyperosunlocker_gui.py" + Colors.ENDC)
+            sys.exit(0)
+        else:
+            print(Colors.YELLOW + "\nProgram sonlandırıldı.")
+            sys.exit(0)
     
     # 1. Saat Senkronizasyonu
     print(Colors.YELLOW + "\n⏰ Zaman senkronize ediliyor...")
