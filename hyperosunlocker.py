@@ -1,256 +1,269 @@
+"""
+HyperOS Bootloader Unlocker - CLI Version
+Copyright © 2026 SerdarOnline
+https://forum.miuiturkiye.net/uyeler/serdaronline.99036/
+MiuiTürkiye Forum: https://forum.miuiturkiye.net/
+
+Bu yazılım SerdarOnline tarafından geliştirilmiştir.
+Telif hakkı koruması altındadır.
+"""
+
 import hashlib
 import random
 import time
-import webbrowser
-from datetime import datetime, timezone, timedelta
+import json
+import sys
+import base64
+import threading
+from datetime import datetime, timedelta, timezone
 import ntplib
 import pytz
 import urllib3
-import json
-from icmplib import ping
-from colorama import init, Fore, Style
 
-init(autoreset=True)
-col_g = Fore.GREEN 
-col_gb = Style.BRIGHT + Fore.GREEN 
-col_b = Fore.BLUE 
-col_bb = Style.BRIGHT + Fore.BLUE 
-col_y = Fore.YELLOW 
-col_yb = Style.BRIGHT + Fore.YELLOW 
-col_r = Fore.RED 
-col_rb = Style.BRIGHT + Fore.RED 
+# ═══════════════════════════════════════════════════════════════════
+# 🔒 LİSANS KORUMA SİSTEMİ - By SerdarOnline
+# Bu kod SerdarOnline tarafından geliştirilmiştir.
+# Telif hakkı koruması aktiftir. Yetkisiz değişiklik yasaktır.
+# ═══════════════════════════════════════════════════════════════════
 
-ntp_servers = [
-    "ntp0.ntp-servers.net", "ntp1.ntp-servers.net", "ntp2.ntp-servers.net",
-    "ntp3.ntp-servers.net", "ntp4.ntp-servers.net", "ntp5.ntp-servers.net",
-    "ntp6.ntp-servers.net"
-]
+_LICENSE_SIGNATURE = "Q0hBUkFDVEVSaXplZEJ5U2VyZGFyT25saW5l"  # Base64: "CHARACTERizedBySerdarOnline"
+_AUTHOR_HASH = "db4d3b2745ec26c7dde4fc0896a35a22"  # MD5 of "By SerdarOnline"
+_INTEGRITY_KEY = "U2VyZGFyT25saW5l"  # Base64: "SerdarOnline"
 
-mi_account_url = "https://account.xiaomi.com/fe/service/login/password?_locale=en_IN&checkSafePhone=false&sid=18n_bbs_global&qs=%253Fcallback%253Dhttps%25253A%25252F%25252Fsgp-api.buy.mi.com%25252Fbbs%25252Fapi%25252Fglobal%25252Fuser%25252Flogin-back%25253Ffollowup%25253Dhttps%2525253A%2525252F%2525252Fnew-ams.c.mi.com%2525252Fglobal%2525252F%252526sign%25253DM2UyYmIxZjc0MGQxODhkYjg3NWVlNDI4ZGQxNzk3ZmY3MThhYTVmNA%25252C%25252C%2526sid%253D18n_bbs_global%2526_locale%253Den_IN%2526checkSafePhone%253Dfalse&callback=https%3A%2F%2Fsgp-api.buy.mi.com%2Fbbs%2Fapi%2Fglobal%2Fuser%2Flogin-back%3Ffollowup%3Dhttps%253A%252F%252Fnew-ams.c.mi.com%252Fglobal%252F%26sign%3DM2UyYmIxZjc0MGQxODhkYjg3NWVlNDI4ZGQxNzk3ZmY3MThhYTVmNA%2C%2C&_sign=%2BnjnarFZlvmk2A9UJro3U%2BS0lbc%3D&serviceParam=%7B%22checkSafePhone%22%3Afalse%2C%22checkSafeAddress%22%3Afalse%2C%22lsrp_score%22%3A0.0%7D&showActiveX=false&theme=&needTheme=false&bizDeviceType="
-webbrowser.open_new(mi_account_url)
-
-print("Insert below the value of cookie [new_bbs_serviceToken]")
-token_input = input("new_bbs_serviceToken: ")
-
-print (col_y + f"Checking Account Status" + Fore.RESET)
-cookie_value = token_input.strip()
-feedtime = float(1400)
-feed_time_shift = feedtime
-feed_time_shift_1 = feed_time_shift / 1000
-
-def generate_device_id():
-    random_data = f"{random.random()}-{time.time()}"
-    device_id = hashlib.sha1(random_data.encode('utf-8')).hexdigest().upper()
-    return device_id
-
-def get_initial_beijing_time():
-    client = ntplib.NTPClient()
-    beijing_tz = pytz.timezone("Asia/Shanghai")
-    for server in ntp_servers:
-        try:
-            print(col_y + f"\nGetting Beijing time 🇨🇳" + Fore.RESET)
-            response = client.request(server, version=3)
-            ntp_time = datetime.fromtimestamp(response.tx_time, timezone.utc)
-            beijing_time = ntp_time.astimezone(beijing_tz)
-            print(col_g + f"[⏰🇨🇳]: " + Fore.RESET +  f"{beijing_time.strftime('%Y-%m-%d %H:%M:%S.%f')}")
-            return beijing_time
-        except Exception as e:
-            print(f"Error to connect {server}: {e}")
-    print(f"NTP Server Not Found.")
-    return None
-
-def get_synchronized_beijing_time(start_beijing_time, start_timestamp):
-    elapsed = time.time() - start_timestamp
-    current_time = start_beijing_time + timedelta(seconds=elapsed)
-    return current_time
-
-def wait_until_target_time(start_beijing_time, start_timestamp):
-    next_day = start_beijing_time + timedelta(days=1)
-    print(col_y + f"\nBootloader unlock request" + Fore.RESET)
-    print (col_g + f"[Phase Shift Established]: " + Fore.RESET + f"{feed_time_shift:.2f} мс.")
-    target_time = next_day.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(seconds=feed_time_shift_1)
-    print(col_g + f"[Waiting untill ... 🥱]: " + Fore.RESET + f"{target_time.strftime('%Y-%m-%d %H:%M:%S.%f')}")
-    print(f"Do not exit")
-    
-    while True:
-        current_time = get_synchronized_beijing_time(start_beijing_time, start_timestamp)
-        time_diff = target_time - current_time
-        
-        if time_diff.total_seconds() > 1:
-            time.sleep(min(1.0, time_diff.total_seconds() - 1))
-        elif current_time >= target_time:
-            print(f"It's tiiime: {current_time.strftime('%Y-%m-%d %H:%M:%S.%f')}. Starting requests")
-            break
-        else:
-            time.sleep(0.0001)
-
-def check_unlock_status(session, cookie_value, device_id):
+def _verify_license():
+    """Lisans doğrulama - Bu fonksiyon silinirse program çalışmaz"""
     try:
-        url = "https://sgp-api.buy.mi.com/bbs/api/global/user/bl-switch/state"
-        headers = {
-            "Cookie": f"new_bbs_serviceToken={cookie_value};versionCode=500411;versionName=5.4.11;deviceId={device_id};"
-        }
-        
-        response = session.make_request('GET', url, headers=headers)
-        if response is None:
-            print(f"[Error] It was not possible retrieve unlock status.")
+        # Signature kontrolü
+        decoded = base64.b64decode(_LICENSE_SIGNATURE).decode('utf-8')
+        if "SerdarOnline" not in decoded:
             return False
-
-        response_data = json.loads(response.data.decode('utf-8'))
-        response.release_conn()
-
-        if response_data.get("code") == 100004:
-            print(f"[Error] Expired Cookie ... try again.")
-            exit()
-
-        data = response_data.get("data", {})
-        is_pass = data.get("is_pass")
-        button_state = data.get("button_state")
-        deadline_format = data.get("deadline_format", "")
-
-        if is_pass == 4:
-            if button_state == 1:
-                    print(col_g + f"[Account Status]: " + Fore.RESET + f"the requests will be sent.")
-                    return True
-
-            elif button_state == 2:
-                print(col_g + f"[Account Satus]: " + Fore.RESET + f"requests blocked untill " f"{deadline_format} (Month/Day).")
-                status_2 = (input(f"Continue (" + col_b + f"Yes/No" +Fore.RESET + f")?: ") )
-                if (status_2 == 'y' or status_2 == 'Y' or status_2 == 'yes' or status_2 == 'Yes' or status_2 == 'YES'):
-                    return True
-                else:
-                    exit()
-            elif button_state == 3:
-                print(col_g + f"[Account Status]: " + Fore.RESET + f"Account created date lesser than 30 days")
-                status_3 = (input(f"Continue (" + col_b + f"Yes/No" +Fore.RESET + f")?: ") )
-                if (status_3 == 'y' or status_3 == 'Y' or status_3 == 'yes' or status_3 == 'Yes' or status_3 == 'YES'):
-                    return True
-                else:
-                    exit()
-        elif is_pass == 1:
-            print(col_g + f"[Account Status]: " + Fore.RESET + f"Request approved, unblock untill " f"{deadline_format}.")
-            input(f"Presione Enter para cerrar...")
-            exit()
-        else:
-            print(col_g + f"[Account Status]: " + Fore.RESET + f"Unknow State.")
-            exit()
-    except Exception as e:
-        print(f"[Error at status checking] {e}")
+        
+        # Author hash kontrolü  
+        author_text = "By SerdarOnline"
+        calculated_hash = hashlib.md5(author_text.encode('utf-8')).hexdigest()
+        if calculated_hash != _AUTHOR_HASH:
+            return False
+        
+        # Integrity key kontrolü
+        integrity = base64.b64decode(_INTEGRITY_KEY).decode('utf-8')
+        if integrity != "SerdarOnline":
+            return False
+            
+        return True
+    except:
         return False
 
-class HTTP11Session:
-    def __init__(self):
-        self.http = urllib3.PoolManager(
-            maxsize=10,
-            retries=True,
-            timeout=urllib3.Timeout(connect=2.0, read=15.0),
-            headers={}
-        )
+def _check_author_integrity():
+    """Yazar bilgisi kontrol - By SerdarOnline"""
+    if not _verify_license():
+        print("\n⚠️ LİSANS DOĞRULAMA HATASI\n")
+        print("Bu yazılım SerdarOnline tarafından geliştirilmiştir.")
+        print("Telif hakkı koruması ihlal edilmiştir.\n")
+        print("Yetkisiz değişiklik tespit edildi.")
+        print("Program sonlandırılıyor.\n")
+        print("© 2026 SerdarOnline - Tüm hakları saklıdır.")
+        sys.exit(1)
 
-    def make_request(self, method, url, headers=None, body=None):
-        try:
-            request_headers = {}
-            if headers:
-                request_headers.update(headers)
-                request_headers['Content-Type'] = 'application/json; charset=utf-8'
-            
-            if method == 'POST':
-                if body is None:
-                    body = '{"is_retry":true}'.encode('utf-8')
-                request_headers['Content-Length'] = str(len(body))
-                request_headers['Accept-Encoding'] = 'gzip, deflate, br'
-                request_headers['User-Agent'] = 'okhttp/4.12.0'
-                request_headers['Connection'] = 'keep-alive'
-            
-            response = self.http.request(
-                method,
-                url,
-                headers=request_headers,
-                body=body,
-                preload_content=False
-            )
-            
-            return response
-        except Exception as e:
-            print(f"[Netwrok Error] {e}")
-            return None
- 
+# Lisans kontrolü yap
+_check_author_integrity()
+
+# Renk kodları (colorama olmadan)
+class Colors:
+    HEADER = '\033[95m'
+    BLUE = '\033[94m'
+    CYAN = '\033[96m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+
+print(Colors.CYAN + Colors.BOLD + """
+╔══════════════════════════════════════════════════════════════╗
+║   HyperOS Bootloader Unlocker - CLI Version                 ║
+║   Copyright © 2026 SerdarOnline                             ║
+║   MiuiTürkiye Forum                                          ║
+╚══════════════════════════════════════════════════════════════╝
+""" + Colors.ENDC)
+
+# --- AYARLAR ---
+TOKEN = "BURAYA_TOKEN_GELECEK"  # Yakaladığın token
+USER_ID = "6167633761"          # Senin User ID'n
+THREAD_COUNT = 10               # Aynı anda kaç istek gönderilsin?
+FEEDTIME_MS = 450               # 19:00'dan kaç milisaniye önce başlasın? (Ping'e göre ayarla)
+FAILOVER_ATTEMPTS = 2           # Her istek için kaç deneme yapılsın
+REQUEST_TIMEOUT = 2.0           # İstek timeout süresi (saniye)
+
+# URL - Sadece SGP endpoint çalışıyor
+UNLOCK_URL = "https://sgp-api.buy.mi.com/bbs/api/global/apply/bl-auth"
+CHECK_URL = "https://sgp-api.buy.mi.com/bbs/api/global/user/bl-switch/state"
+
+# User-Agent çeşitleri (rotasyon için)
+USER_AGENTS = [
+    "okhttp/4.12.0",
+    "okhttp/4.11.0",
+    "okhttp/4.10.0",
+    "Dalvik/2.1.0 (Linux; U; Android 13; MI 9 Build/TKQ1.220829.002)",
+    "Dalvik/2.1.0 (Linux; U; Android 12; Redmi Note 11 Pro Build/SKQ1.211006.001)",
+    "Dalvik/2.1.0 (Linux; U; Android 14; Xiaomi 13 Build/UKQ1.230804.001)",
+]
+
+def generate_device_id():
+    return hashlib.sha1(f"{random.random()}{time.time()}".encode()).hexdigest().upper()
+
+DEVICE_ID = generate_device_id()
+
+# Bağlantı Havuzu
+http = urllib3.PoolManager(
+    maxsize=THREAD_COUNT + 5,
+    timeout=urllib3.Timeout(connect=REQUEST_TIMEOUT, read=5.0),
+    retries=False # Kota savaşında beklemeye vaktimiz yok, hata alırsak hemen yeni istek
+)
+
+def send_request(thread_id, start_beijing, start_ts, attempt=0):
+    """Saldırı anında çalışan ana fonksiyon - By SerdarOnline"""
+    # Dynamic User-Agent rotasyonu
+    user_agent = USER_AGENTS[thread_id % len(USER_AGENTS)]
+    
+    headers = {
+        "Cookie": f"new_bbs_serviceToken={TOKEN};userId={USER_ID};versionCode=500411;versionName=5.4.11;deviceId={DEVICE_ID};",
+        "User-Agent": user_agent,
+        "Content-Type": "application/json; charset=utf-8"
+    }
+    body = json.dumps({"is_retry": True}).encode('utf-8')
+    
+    now = datetime.now(timezone.utc).astimezone(pytz.timezone("Asia/Shanghai"))
+    print(Colors.CYAN + f"[Thread-{thread_id}] Başvuru gönderiliyor... Saat: {now.strftime('%H:%M:%S.%f')}")
+    
+    try:
+        resp = http.request('POST', UNLOCK_URL, headers=headers, body=body)
+        
+        # Server Date header'ını göster
+        server_date = resp.headers.get('Date', 'Bilinmiyor')
+        print(Colors.BLUE + f"[Thread-{thread_id}] Server Date: {server_date}")
+        
+        data = json.loads(resp.data.decode('utf-8'))
+        code = data.get("code")
+        
+        if code == 0:
+            res = data.get("data", {}).get("apply_result")
+            if res == 1:
+                print(Colors.GREEN + Colors.BOLD + "!!! BAŞARILI !!! Kilit açma izni alındı." + Colors.ENDC)
+                return True
+            elif res == 3:
+                print(Colors.RED + "[Thread-{thread_id}] Kota dolmuş (Quota Reached).")
+        elif code in [500, 502, 503, 429]:
+            # Rate limit veya server hatası - retry
+            if attempt < FAILOVER_ATTEMPTS:
+                print(Colors.YELLOW + f"[Thread-{thread_id}] Server hatası ({code}), yeniden deniyor... ({attempt+1}/{FAILOVER_ATTEMPTS})")
+                time.sleep(0.05)  # 50ms bekle
+                return send_request(thread_id, start_beijing, start_ts, attempt + 1)
+            else:
+                print(Colors.RED + f"[Thread-{thread_id}] Maksimum deneme sayısına ulaşıldı.")
+        else:
+            print(Colors.YELLOW + f"[Thread-{thread_id}] Sunucu Yanıtı: {data}")
+    except Exception as e:
+        if attempt < FAILOVER_ATTEMPTS:
+            print(Colors.YELLOW + f"[Thread-{thread_id}] Hata: {e}, yeniden deniyor...")
+            time.sleep(0.05)
+            return send_request(thread_id, start_beijing, start_ts, attempt + 1)
+        else:
+            print(Colors.RED + f"[Thread-{thread_id}] Hata: {e}")
+    
+    return False
+
+def attack_sequence(start_beijing, start_ts):
+    """Zamanı gelince thread'leri ateşler"""
+    threads = []
+    success = False
+    
+    for i in range(THREAD_COUNT):
+        t = threading.Thread(target=lambda tid: send_request(tid, start_beijing, start_ts), args=(i,))
+        threads.append(t)
+        t.start()
+        # Staggered start: Her thread'i 5ms arayla başlat
+        time.sleep(0.005)
+    
+    for t in threads:
+        t.join()
+    
+    if success:
+        print(Colors.GREEN + Colors.BOLD + "\n✅ İşlem başarıyla tamamlandı!" + Colors.ENDC)
+    else:
+        print(Colors.YELLOW + "\n⚠️ Tüm denemeler tamamlandı." + Colors.ENDC)
+
 def main():
+    # Lisans kontrolü
+    _check_author_integrity()
+    
+    print(Colors.CYAN + "Token ve User ID kontrol ediliyor...")
+    if TOKEN == "BURAYA_TOKEN_GELECEK":
+        print(Colors.RED + "❌ HATA: TOKEN değişkenini güncellemeyi unuttunuz!")
+        print(Colors.YELLOW + "Lütfen kodun başındaki TOKEN değişkenine kendi token'ınızı yapıştırın.")
+        sys.exit(1)
+    
+    # 1. Saat Senkronizasyonu
+    print(Colors.YELLOW + "\n⏰ Zaman senkronize ediliyor...")
+    client = ntplib.NTPClient()
+    try:
+        response = client.request('pool.ntp.org', version=3)
+        ntp_now = datetime.fromtimestamp(response.tx_time, timezone.utc)
+        beijing_tz = pytz.timezone("Asia/Shanghai")
+        start_beijing = ntp_now.astimezone(beijing_tz)
+        start_ts = time.time()
+        print(Colors.GREEN + f"✅ Pekin Saati: {start_beijing.strftime('%H:%M:%S')}")
+    except Exception as e:
+        print(Colors.RED + f"❌ NTP Hatası: {e}")
+        print(Colors.YELLOW + "İnternetinizi kontrol edin veya farklı bir NTP sunucusu deneyin.")
+        return
+
+    # 2. Ping testi
+    print(Colors.CYAN + "\n🌐 Endpoint ping testi yapılıyor...")
+    try:
+        start_time = time.time()
+        resp = http.request('HEAD', UNLOCK_URL, timeout=2.0)
+        ping_ms = (time.time() - start_time) * 1000
+        print(Colors.GREEN + f"✅ SGP API Ping: {ping_ms:.0f}ms")
         
-    device_id = generate_device_id()
-    session = HTTP11Session()
+        if ping_ms > 200:
+            print(Colors.YELLOW + f"⚠️ Yüksek ping! FEEDTIME_MS değerini artırmayı düşünün (şu an: {FEEDTIME_MS}ms)")
+    except Exception as e:
+        print(Colors.RED + f"⚠️ Ping testi başarısız: {e}")
 
-    if check_unlock_status(session, cookie_value, device_id):
-        start_beijing_time = get_initial_beijing_time()
-        if start_beijing_time is None:
-            print(f"Error to retrieve Beijing time.")
-            exit()
+    # 3. Bekleme Modu
+    target_time = (start_beijing + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    # Target time'dan FEEDTIME_MS kadar önce tetikle
+    trigger_time = target_time - timedelta(milliseconds=FEEDTIME_MS)
+    
+    print(Colors.BLUE + f"\n🎯 Hedef Saat: {target_time.strftime('%H:%M:%S')}")
+    print(Colors.BLUE + f"⚡ Tetiklenme: {trigger_time.strftime('%H:%M:%S.%f')[:-3]}")
+    print(Colors.YELLOW + "\n⏳ Bekleniyor, lütfen scripti kapatmayın...\n")
 
-        start_timestamp = time.time()
+    while True:
+        elapsed = time.time() - start_ts
+        current_beijing = start_beijing + timedelta(seconds=elapsed)
         
-        wait_until_target_time(start_beijing_time, start_timestamp)
-
-        url = "https://sgp-api.buy.mi.com/bbs/api/global/apply/bl-auth"
-        headers = {
-            "Cookie": f"new_bbs_serviceToken={cookie_value};versionCode=500411;versionName=5.4.11;deviceId={device_id};"
-        }
-
-        try:
-            while True:
-                request_time = get_synchronized_beijing_time(start_beijing_time, start_timestamp)
-                print(col_g + f"[Request]: " + Fore.RESET + f"Request sent at {request_time.strftime('%Y-%m-%d %H:%M:%S.%f')} (UTC+8)")
-                
-                response = session.make_request('POST', url, headers=headers)
-                if response is None:
-                    continue
-
-                response_time = get_synchronized_beijing_time(start_beijing_time, start_timestamp)
-                print(col_g + f"[Response]: " + Fore.RESET + f"Received at {response_time.strftime('%Y-%m-%d %H:%M:%S.%f')} (UTC+8)")
-
-                try:
-                    response_data = response.data
-                    response.release_conn()
-                    json_response = json.loads(response_data.decode('utf-8'))
-                    code = json_response.get("code")
-                    data = json_response.get("data", {})
-
-                    if code == 0:
-                        apply_result = data.get("apply_result")
-                        if apply_result == 1:
-                            print(col_g + f"[Status]: " + Fore.RESET + f"Request approved, checking status")
-                            check_unlock_status(session, cookie_value, device_id)
-                        elif apply_result == 3:
-                            deadline_format = data.get("deadline_format", "Not declared")
-                            print(col_g + f"[Status]: " + Fore.RESET + f"Request quota reached. Try again at {deadline_format} (Month/Day).")
-                            exit()
-                        elif apply_result == 4:
-                            deadline_format = data.get("deadline_format", "Not declared")
-                            print(col_g + f"[Status]: " + Fore.RESET + f"Account blocked untill {deadline_format} (Month/Day).")
-                            exit()
-                    elif code == 100001:
-                        print(col_g + f"[Status]: " + Fore.RESET + f"Request rejected")
-                        print(col_g + f"[Response]: " + Fore.RESET + f"{json_response}")
-                    elif code == 100003:
-                        print(col_g + f"[Status]: " + Fore.RESET + f"Maybe it was approved, check status")
-                        print(col_g + f"[Response]: " + Fore.RESET + f"{json_response}")
-                        check_unlock_status(session, cookie_value, device_id)
-                    elif code is not None:
-                        print(col_g + f"[Status]: " + Fore.RESET + f"Unknow status: {code}")
-                        print(col_g + f"[Response]: " + Fore.RESET + f"{json_response}")
-                    else:
-                        print(col_g + f"[Error]: " + Fore.RESET + f"Response without status code")
-                        print(col_g + f"[Response]: " + Fore.RESET + f"{json_response}")
-
-                except json.JSONDecodeError:
-                    print(col_g + f"[Error]: " + Fore.RESET + f"JSON decode error")
-                    print(col_g + f"[Server Response]: " + Fore.RESET + f"{response_data}")
-                except Exception as e:
-                    print(col_g + f"[Error response processing]: " + Fore.RESET + f"{e}")
-                    continue
-
-        except Exception as e:
-            print(col_g + f"[Request Error]: " + Fore.RESET + f"{e}")
-            exit()
+        if current_beijing >= trigger_time:
+            print(Colors.BOLD + Colors.RED + "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+            print("        🚀 SALDIRI BAŞLADI 🚀")
+            print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + Colors.ENDC + "\n")
+            attack_sequence(start_beijing, start_ts)
+            break
+        
+        # CPU'yu yormadan ama hassas kontrol
+        time.sleep(0.001)
+    
+    print(Colors.CYAN + "\n" + "="*60)
+    print(Colors.BOLD + "Program sonlandırıldı - By SerdarOnline" + Colors.ENDC)
+    print(Colors.CYAN + "="*60 + Colors.ENDC)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print(Colors.YELLOW + "\n\n⚠️ Kullanıcı tarafından durduruldu.")
+        print(Colors.CYAN + "Program sonlandırıldı - By SerdarOnline" + Colors.ENDC)
+        sys.exit(0)
+    except Exception as e:
+        print(Colors.RED + f"\n❌ Beklenmeyen hata: {e}")
+        sys.exit(1)
