@@ -760,60 +760,32 @@ class HyperOSUnlockerGUI(QMainWindow):
         
         # Footer - Telif Hakkı Bilgisi
         footer_frame = QFrame()
-        footer_frame.setFrameShape(QFrame.StyledPanel)
+        footer_frame.setFrameShape(QFrame.NoFrame)
         footer_frame.setStyleSheet("""
             QFrame {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #1a1c2e, stop:1 #2d3250);
-                border: 2px solid #3a7bd5;
-                border-radius: 8px;
-                padding: 8px;
-                margin-top: 10px;
+                background: transparent;
+                border: none;
+                padding: 0px;
+                margin-top: 0px;
             }
         """)
         footer_layout = QHBoxLayout(footer_frame)
-        footer_layout.setContentsMargins(10, 5, 10, 5)
+        footer_layout.setContentsMargins(5, 0, 5, 0)
         
         # Logo/Icon
         footer_icon = QLabel("🔐")
-        footer_icon.setStyleSheet("font-size: 20px; background: transparent; border: none;")
+        footer_icon.setStyleSheet("font-size: 16px; background: transparent; border: none;")
         footer_layout.addWidget(footer_icon)
         
-        # Copyright metni (Forum linki)
-        forum_link = QLabel('<a href="https://forum.miuiturkiye.net/" style="color: #3a7bd5; text-decoration: none;">MiuiTürkiye Forum</a>')
-        forum_link.setOpenExternalLinks(True)
-        forum_link.setStyleSheet("""
-            QLabel {
-                color: #b0b3c1;
-                font-size: 12px;
-                font-weight: 500;
-                background: transparent;
-                border: none;
-            }
-        """)
-        footer_layout.addWidget(forum_link)
-        
-        footer_layout.addWidget(QLabel(" | "))
-        
-        # Yazar linki
-        author_link = QLabel('<a href="https://forum.miuiturkiye.net/uyeler/serdaronline.99036/" style="color: #00d2ff; text-decoration: none;">SerdarOnline</a>')
-        author_link.setOpenExternalLinks(True)
-        author_link.setStyleSheet("""
-            QLabel {
-                color: #b0b3c1;
-                font-size: 12px;
-                font-weight: 500;
-                background: transparent;
-                border: none;
-            }
-        """)
-        footer_layout.addWidget(author_link)
-        
-        footer_layout.addStretch()
-        
-        # Copyright
-        copyright_text = QLabel("© 2026 SerdarOnline")
-        copyright_text.setStyleSheet("""
+        # Tek satırda copyright metni
+        copyright_label = QLabel(
+            '© 2026 <a href="https://forum.miuiturkiye.net/uyeler/serdaronline.99036/" '
+            'style="color: #00d2ff; text-decoration: none;">SerdarOnline</a> | '
+            '<a href="https://forum.miuiturkiye.net/" '
+            'style="color: #3a7bd5; text-decoration: none;">MiuiTürkiye</a>'
+        )
+        copyright_label.setOpenExternalLinks(True)
+        copyright_label.setStyleSheet("""
             QLabel {
                 color: #b0b3c1;
                 font-size: 11px;
@@ -821,14 +793,16 @@ class HyperOSUnlockerGUI(QMainWindow):
                 border: none;
             }
         """)
-        footer_layout.addWidget(copyright_text)
+        footer_layout.addWidget(copyright_label)
+        
+        footer_layout.addStretch()
         
         # Versiyon
         version_label = QLabel("v1.0.0")
         version_label.setStyleSheet("""
             QLabel {
                 color: #3a7bd5;
-                font-size: 11px;
+                font-size: 10px;
                 font-weight: bold;
                 background: transparent;
                 border: none;
