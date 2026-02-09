@@ -27,7 +27,7 @@ Bu proje, **[pwnj/auto-hyperos-unlocker](https://github.com/pwnj/auto-hyperos-un
 1.  Python 3.10 veya üzeri bir sürümün yüklü olduğundan emin olun.
 2.  Gerekli kütüphaneleri yükleyin:
     ```bash
-    pip install PyQt5 urllib3 selenium ntplib pytz webdriver-manager
+    pip install -r requirements.txt
     ```
 3.  Uygulamayı çalıştırın:
     ```bash
