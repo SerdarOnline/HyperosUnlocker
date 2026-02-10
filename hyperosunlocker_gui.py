@@ -4,6 +4,7 @@ import time
 import json
 import sys
 import os
+import re
 import ctypes
 import threading
 from datetime import datetime, timedelta, timezone
@@ -595,6 +596,21 @@ class HyperOSUnlockerGUI(QMainWindow):
         _check_author_integrity()  # Lisans kontrolü
         self.worker = None
         
+        # Log dosyası için hazırlık
+        log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+        os.makedirs(log_dir, exist_ok=True)
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.log_file_path = os.path.join(log_dir, f"hyperosunlocker_{timestamp}.log")
+        
+        # Log dosyasına başlangıç bilgisi yaz
+        with open(self.log_file_path, 'w', encoding='utf-8') as f:
+            f.write("="*60 + "\n")
+            f.write("HyperOS Bootloader Unlocker - Log Dosyası\n")
+            f.write(f"Başlangıç: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write("Copyright © 2026 SerdarOnline\n")
+            f.write("="*60 + "\n\n")
+        
         # Gelişmiş ayarlar için varsayılan değerler
         self.advanced_settings = {
             'failover_attempts': 2,
@@ -719,6 +735,19 @@ class HyperOSUnlockerGUI(QMainWindow):
         log_group.setObjectName("groupBox")
         log_layout = QVBoxLayout()
         
+        # Log dosya yolu bilgisi
+        log_file_info = QLabel(f"📁 Loglar kaydediliyor: {os.path.basename(self.log_file_path)}")
+        log_file_info.setStyleSheet("""
+            QLabel {
+                color: #00d2ff;
+                font-size: 10px;
+                padding: 2px;
+                background: transparent;
+            }
+        """)
+        log_file_info.setToolTip(self.log_file_path)
+        log_layout.addWidget(log_file_info)
+        
         self.log_text = QTextEdit()
         self.log_text.setReadOnly(True)
         self.log_text.setMinimumHeight(250)
@@ -818,6 +847,11 @@ class HyperOSUnlockerGUI(QMainWindow):
         # System Tray Icon
         self.setup_tray_icon()
         
+        # Başlangıç log mesajları
+        self.add_log("🚀 Program başlatıldı - HyperOS Bootloader Unlocker v1.0.0", "success")
+        self.add_log(f"📁 Log dosyası: {self.log_file_path}", "info")
+        self.add_log("ℹ️ Tüm işlem günlükleri otomatik olarak kaydediliyor", "info")
+        
     def setup_tray_icon(self):
         """System tray icon'u kur"""
         # İkon yolu
@@ -868,6 +902,15 @@ class HyperOSUnlockerGUI(QMainWindow):
     
     def quit_application(self):
         """Uygulamayı tamamen kapat"""
+        # Log dosyasına kapanış bilgisi yaz
+        try:
+            with open(self.log_file_path, 'a', encoding='utf-8') as f:
+                f.write("\n" + "="*60 + "\n")
+                f.write(f"Program Kapandı: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write("="*60 + "\n")
+        except:
+            pass
+        
         self.tray_icon.hide()
         QApplication.quit()
     
@@ -1330,8 +1373,9 @@ class HyperOSUnlockerGUI(QMainWindow):
             self.optimize_button.setText("⚡ Otomatik Optimizasyon (Ping Testi)")
     
     def add_log(self, message, log_type="info"):
-        """Renkli log ekleme"""
+        """Renkli log ekleme ve dosyaya kaydetme"""
         timestamp = datetime.now().strftime("%H:%M:%S")
+        full_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
         color_map = {
             "info": "#17a2b8",      # cyan
@@ -1340,6 +1384,7 @@ class HyperOSUnlockerGUI(QMainWindow):
             "error": "#dc3545"      # red
         }
         
+        # Ekrana renkli göster
         color = color_map.get(log_type, "#f8f9fa")
         html = f'<span style="color: {color};">[{timestamp}] {message}</span>'
         self.log_text.append(html)
@@ -1347,6 +1392,16 @@ class HyperOSUnlockerGUI(QMainWindow):
         # Auto-scroll
         scrollbar = self.log_text.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
+        
+        # Dosyaya düz metin olarak kaydet
+        try:
+            with open(self.log_file_path, 'a', encoding='utf-8') as f:
+                # HTML etiketlerini temizle
+                clean_message = re.sub('<[^<]+?>', '', message)
+                f.write(f"[{full_timestamp}] [{log_type.upper()}] {clean_message}\n")
+        except Exception as e:
+            # Log dosyasına yazma hatası olursa sadece ekrana yazmaya devam et
+            pass
         
     def start_process(self):
         """İşlemi başlat"""
@@ -1433,7 +1488,15 @@ class HyperOSUnlockerGUI(QMainWindow):
         """Log'u temizle"""
         self.log_text.clear()
         self.progress_bar.setValue(0)
-        self.add_log("Log temizlendi", "info")
+        # Dosyaya ayırıcı yaz
+        try:
+            with open(self.log_file_path, 'a', encoding='utf-8') as f:
+                f.write("\n" + "-"*60 + "\n")
+                f.write("LOG TEMİZLENDİ - Yeni Oturum Başladı\n")
+                f.write("-"*60 + "\n\n")
+        except:
+            pass
+        self.add_log("Log ekranı temizlendi", "info")
     
     def fetch_token_automatically(self):
         """Selenium ile otomatik token çekme"""
