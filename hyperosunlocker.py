@@ -13,6 +13,8 @@ import random
 import time
 import json
 import sys
+import os
+import re
 import base64
 import threading
 from datetime import datetime, timedelta, timezone
@@ -67,6 +69,20 @@ def _check_author_integrity():
 # Lisans kontrolü yap
 _check_author_integrity()
 
+# Log dosyası hazırlığı
+log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+os.makedirs(log_dir, exist_ok=True)
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+log_file_path = os.path.join(log_dir, f"hyperosunlocker_cli_{timestamp}.log")
+
+# Log dosyasına başlangıç bilgisi yaz
+with open(log_file_path, 'w', encoding='utf-8') as f:
+    f.write("="*60 + "\n")
+    f.write("HyperOS Bootloader Unlocker - CLI Version Log\n")
+    f.write(f"Başlangıç: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+    f.write("Copyright © 2026 SerdarOnline\n")
+    f.write("="*60 + "\n\n")
+
 # Renk kodları (colorama olmadan)
 class Colors:
     HEADER = '\033[95m'
@@ -78,13 +94,29 @@ class Colors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
 
-print(Colors.CYAN + Colors.BOLD + """
+def log_print(message, color="", end="\n"):
+    """Hem terminale hem log dosyasına yazdır - By SerdarOnline"""
+    # Terminale renkli yazdır
+    print(color + message + Colors.ENDC, end=end)
+    
+    # Log dosyasına renksiz yazdır
+    try:
+        with open(log_file_path, 'a', encoding='utf-8') as f:
+            # ANSI kodlarını temizle
+            clean_message = re.sub(r'\033\[[0-9;]+m', '', message)
+            timestamp_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            f.write(f"[{timestamp_now}] {clean_message}{end}")
+    except Exception:
+        pass  # Log yazma hatası olursa sessizce devam et
+
+log_print(Colors.CYAN + Colors.BOLD + """
 ╔══════════════════════════════════════════════════════════════╗
 ║   HyperOS Bootloader Unlocker - CLI Version                 ║
 ║   Copyright © 2026 SerdarOnline                             ║
 ║   MiuiTürkiye Forum                                          ║
 ╚══════════════════════════════════════════════════════════════╝
 """ + Colors.ENDC)
+log_print(f"📁 Loglar kaydediliyor: {os.path.basename(log_file_path)}", Colors.CYAN)
 
 # --- AYARLAR ---
 TOKEN = "BURAYA_TOKEN_GELECEK"  # Yakaladığın token
@@ -133,14 +165,14 @@ def send_request(thread_id, start_beijing, start_ts, attempt=0):
     body = json.dumps({"is_retry": True}).encode('utf-8')
     
     now = datetime.now(timezone.utc).astimezone(pytz.timezone("Asia/Shanghai"))
-    print(Colors.CYAN + f"[Thread-{thread_id}] Başvuru gönderiliyor... Saat: {now.strftime('%H:%M:%S.%f')}")
+    log_print(f"[Thread-{thread_id}] Başvuru gönderiliyor... Saat: {now.strftime('%H:%M:%S.%f')}", Colors.CYAN)
     
     try:
         resp = http.request('POST', UNLOCK_URL, headers=headers, body=body)
         
         # Server Date header'ını göster
         server_date = resp.headers.get('Date', 'Bilinmiyor')
-        print(Colors.BLUE + f"[Thread-{thread_id}] Server Date: {server_date}")
+        log_print(f"[Thread-{thread_id}] Server Date: {server_date}", Colors.BLUE)
         
         data = json.loads(resp.data.decode('utf-8'))
         code = data.get("code")
@@ -148,27 +180,27 @@ def send_request(thread_id, start_beijing, start_ts, attempt=0):
         if code == 0:
             res = data.get("data", {}).get("apply_result")
             if res == 1:
-                print(Colors.GREEN + Colors.BOLD + "!!! BAŞARILI !!! Kilit açma izni alındı." + Colors.ENDC)
+                log_print("!!! BAŞARILI !!! Kilit açma izni alındı.", Colors.GREEN + Colors.BOLD)
                 return True
             elif res == 3:
-                print(Colors.RED + "[Thread-{thread_id}] Kota dolmuş (Quota Reached).")
+                log_print(f"[Thread-{thread_id}] Kota dolmuş (Quota Reached).", Colors.RED)
         elif code in [500, 502, 503, 429]:
             # Rate limit veya server hatası - retry
             if attempt < FAILOVER_ATTEMPTS:
-                print(Colors.YELLOW + f"[Thread-{thread_id}] Server hatası ({code}), yeniden deniyor... ({attempt+1}/{FAILOVER_ATTEMPTS})")
+                log_print(f"[Thread-{thread_id}] Server hatası ({code}), yeniden deniyor... ({attempt+1}/{FAILOVER_ATTEMPTS})", Colors.YELLOW)
                 time.sleep(0.05)  # 50ms bekle
                 return send_request(thread_id, start_beijing, start_ts, attempt + 1)
             else:
-                print(Colors.RED + f"[Thread-{thread_id}] Maksimum deneme sayısına ulaşıldı.")
+                log_print(f"[Thread-{thread_id}] Maksimum deneme sayısına ulaşıldı.", Colors.RED)
         else:
-            print(Colors.YELLOW + f"[Thread-{thread_id}] Sunucu Yanıtı: {data}")
+            log_print(f"[Thread-{thread_id}] Sunucu Yanıtı: {data}", Colors.YELLOW)
     except Exception as e:
         if attempt < FAILOVER_ATTEMPTS:
-            print(Colors.YELLOW + f"[Thread-{thread_id}] Hata: {e}, yeniden deniyor...")
+            log_print(f"[Thread-{thread_id}] Hata: {e}, yeniden deniyor...", Colors.YELLOW)
             time.sleep(0.05)
             return send_request(thread_id, start_beijing, start_ts, attempt + 1)
         else:
-            print(Colors.RED + f"[Thread-{thread_id}] Hata: {e}")
+            log_print(f"[Thread-{thread_id}] Hata: {e}", Colors.RED)
     
     return False
 
@@ -188,9 +220,9 @@ def attack_sequence(start_beijing, start_ts):
         t.join()
     
     if success:
-        print(Colors.GREEN + Colors.BOLD + "\n✅ İşlem başarıyla tamamlandı!" + Colors.ENDC)
+        log_print("\n✅ İşlem başarıyla tamamlandı!", Colors.GREEN + Colors.BOLD)
     else:
-        print(Colors.YELLOW + "\n⚠️ Tüm denemeler tamamlandı." + Colors.ENDC)
+        log_print("\n⚠️ Tüm denemeler tamamlandı.", Colors.YELLOW)
 
 def main():
     global TOKEN, USER_ID
@@ -198,38 +230,38 @@ def main():
     # Lisans kontrolü
     _check_author_integrity()
     
-    print(Colors.CYAN + "Token ve User ID kontrol ediliyor...")
+    log_print("Token ve User ID kontrol ediliyor...", Colors.CYAN)
     
     # TOKEN manuel girilmemişse interaktif olarak sor
     if TOKEN == "BURAYA_TOKEN_GELECEK":
-        print(Colors.YELLOW + "\n⚠️ TOKEN ayarlanmamış!")
-        print(Colors.CYAN + "\nSeçenekler:")
-        print("  1. TOKEN'ı şimdi gir (interaktif)")
-        print("  2. GUI versiyonunu kullan (önerilen)")
-        print("  3. Çıkış")
+        log_print("\n⚠️ TOKEN ayarlanmamış!", Colors.YELLOW)
+        log_print("\nSeçenekler:", Colors.CYAN)
+        log_print("  1. TOKEN'ı şimdi gir (interaktif)")
+        log_print("  2. GUI versiyonunu kullan (önerilen)")
+        log_print("  3. Çıkış")
         
         choice = input(Colors.BOLD + "\nSeçiminiz (1/2/3): " + Colors.ENDC).strip()
         
         if choice == "1":
-            print(Colors.CYAN + "\n📝 TOKEN ve User ID girişi:")
+            log_print("\n📝 TOKEN ve User ID girişi:", Colors.CYAN)
             TOKEN = input("  Token (new_bbs_serviceToken): ").strip()
             USER_ID = input("  User ID (userId): ").strip()
             
             if not TOKEN or not USER_ID:
-                print(Colors.RED + "❌ TOKEN ve User ID boş bırakılamaz!")
+                log_print("❌ TOKEN ve User ID boş bırakılamaz!", Colors.RED)
                 sys.exit(1)
             
-            print(Colors.GREEN + "✅ TOKEN başarıyla ayarlandı.")
+            log_print("✅ TOKEN başarıyla ayarlandı.", Colors.GREEN)
         elif choice == "2":
-            print(Colors.CYAN + "\n💡 GUI versiyonunu başlatmak için:")
-            print(Colors.GREEN + "   python hyperosunlocker_gui.py" + Colors.ENDC)
+            log_print("\n💡 GUI versiyonunu başlatmak için:", Colors.CYAN)
+            log_print("   python hyperosunlocker_gui.py", Colors.GREEN)
             sys.exit(0)
         else:
-            print(Colors.YELLOW + "\nProgram sonlandırıldı.")
+            log_print("\nProgram sonlandırıldı.", Colors.YELLOW)
             sys.exit(0)
     
     # 1. Saat Senkronizasyonu
-    print(Colors.YELLOW + "\n⏰ Zaman senkronize ediliyor...")
+    log_print("\n⏰ Zaman senkronize ediliyor...", Colors.YELLOW)
     client = ntplib.NTPClient()
     try:
         response = client.request('pool.ntp.org', version=3)
@@ -237,59 +269,85 @@ def main():
         beijing_tz = pytz.timezone("Asia/Shanghai")
         start_beijing = ntp_now.astimezone(beijing_tz)
         start_ts = time.time()
-        print(Colors.GREEN + f"✅ Pekin Saati: {start_beijing.strftime('%H:%M:%S')}")
+        log_print(f"✅ Pekin Saati: {start_beijing.strftime('%H:%M:%S')}", Colors.GREEN)
     except Exception as e:
-        print(Colors.RED + f"❌ NTP Hatası: {e}")
-        print(Colors.YELLOW + "İnternetinizi kontrol edin veya farklı bir NTP sunucusu deneyin.")
+        log_print(f"❌ NTP Hatası: {e}", Colors.RED)
+        log_print("İnternetinizi kontrol edin veya farklı bir NTP sunucusu deneyin.", Colors.YELLOW)
         return
 
     # 2. Ping testi
-    print(Colors.CYAN + "\n🌐 Endpoint ping testi yapılıyor...")
+    log_print("\n🌐 Endpoint ping testi yapılıyor...", Colors.CYAN)
     try:
         start_time = time.time()
         resp = http.request('HEAD', UNLOCK_URL, timeout=2.0)
         ping_ms = (time.time() - start_time) * 1000
-        print(Colors.GREEN + f"✅ SGP API Ping: {ping_ms:.0f}ms")
+        log_print(f"✅ SGP API Ping: {ping_ms:.0f}ms", Colors.GREEN)
         
         if ping_ms > 200:
-            print(Colors.YELLOW + f"⚠️ Yüksek ping! FEEDTIME_MS değerini artırmayı düşünün (şu an: {FEEDTIME_MS}ms)")
+            log_print(f"⚠️ Yüksek ping! FEEDTIME_MS değerini artırmayı düşünün (şu an: {FEEDTIME_MS}ms)", Colors.YELLOW)
     except Exception as e:
-        print(Colors.RED + f"⚠️ Ping testi başarısız: {e}")
+        log_print(f"⚠️ Ping testi başarısız: {e}", Colors.RED)
 
     # 3. Bekleme Modu
     target_time = (start_beijing + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
     # Target time'dan FEEDTIME_MS kadar önce tetikle
     trigger_time = target_time - timedelta(milliseconds=FEEDTIME_MS)
     
-    print(Colors.BLUE + f"\n🎯 Hedef Saat: {target_time.strftime('%H:%M:%S')}")
-    print(Colors.BLUE + f"⚡ Tetiklenme: {trigger_time.strftime('%H:%M:%S.%f')[:-3]}")
-    print(Colors.YELLOW + "\n⏳ Bekleniyor, lütfen scripti kapatmayın...\n")
+    log_print(f"\n🎯 Hedef Saat: {target_time.strftime('%H:%M:%S')}", Colors.BLUE)
+    log_print(f"⚡ Tetiklenme: {trigger_time.strftime('%H:%M:%S.%f')[:-3]}", Colors.BLUE)
+    log_print("\n⏳ Bekleniyor, lütfen scripti kapatmayın...\n", Colors.YELLOW)
 
     while True:
         elapsed = time.time() - start_ts
         current_beijing = start_beijing + timedelta(seconds=elapsed)
         
         if current_beijing >= trigger_time:
-            print(Colors.BOLD + Colors.RED + "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-            print("        🚀 SALDIRI BAŞLADI 🚀")
-            print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + Colors.ENDC + "\n")
+            log_print("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", Colors.BOLD + Colors.RED)
+            log_print("        🚀 SALDIRI BAŞLADI 🚀", Colors.BOLD + Colors.RED)
+            log_print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n", Colors.BOLD + Colors.RED)
             attack_sequence(start_beijing, start_ts)
             break
         
         # CPU'yu yormadan ama hassas kontrol
         time.sleep(0.001)
     
-    print(Colors.CYAN + "\n" + "="*60)
-    print(Colors.BOLD + "Program sonlandırıldı - By SerdarOnline" + Colors.ENDC)
-    print(Colors.CYAN + "="*60 + Colors.ENDC)
+    log_print("\n" + "="*60, Colors.CYAN)
+    log_print("Program sonlandırıldı - By SerdarOnline", Colors.BOLD)
+    log_print("="*60, Colors.CYAN)
+    
+    # Log dosyasına sonlandırma bilgisi
+    try:
+        with open(log_file_path, 'a', encoding='utf-8') as f:
+            f.write("\n" + "="*60 + "\n")
+            f.write(f"Program Sonlandırıldı: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write("="*60 + "\n")
+    except:
+        pass
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print(Colors.YELLOW + "\n\n⚠️ Kullanıcı tarafından durduruldu.")
-        print(Colors.CYAN + "Program sonlandırıldı - By SerdarOnline" + Colors.ENDC)
+        log_print("\n\n⚠️ Kullanıcı tarafından durduruldu.", Colors.YELLOW)
+        log_print("Program sonlandırıldı - By SerdarOnline", Colors.CYAN)
+        # Log dosyasına sonlandırma bilgisi
+        try:
+            with open(log_file_path, 'a', encoding='utf-8') as f:
+                f.write("\n" + "="*60 + "\n")
+                f.write(f"Program Durduruldu (Ctrl+C): {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write("="*60 + "\n")
+        except:
+            pass
         sys.exit(0)
     except Exception as e:
-        print(Colors.RED + f"\n❌ Beklenmeyen hata: {e}")
+        log_print(f"\n❌ Beklenmeyen hata: {e}", Colors.RED)
+        # Log dosyasına hata bilgisi
+        try:
+            with open(log_file_path, 'a', encoding='utf-8') as f:
+                f.write("\n" + "="*60 + "\n")
+                f.write(f"HATA: {e}\n")
+                f.write(f"Program Hata ile Sonlandırıldı: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write("="*60 + "\n")
+        except:
+            pass
         sys.exit(1)
