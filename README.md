@@ -287,7 +287,7 @@ findstr "Thread" logs\hyperosunlocker_20260210_143055.log
 
 ## 🔄 Değişiklik Günlüğü
 
-### **v1.2.0** - *13 Şubat 2026* ⭐ **GÜNCEL**
+### **v1.2.0** - *13 Şubat 2026* ⭐ **GÜNCEL** ( cloude33 Bildiri için teşekkürler )
 - 📂 Log klasörü konumu optimize edildi - EXE'nin yanında `logs/` oluşturulur
 - 🔧 ChromeDriver yönetimi iyileştirildi - webdriver-manager standart API kullanımı
 - 🛠️ EXE ve script modları için akıllı path detection (sys.frozen kontrolü)
