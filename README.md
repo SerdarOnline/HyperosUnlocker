@@ -1,8 +1,8 @@
-# 🔓 HyperOS Bootloader Unlocker v1.1.0 (Pro GUI Edition)
+# 🔓 HyperOS Bootloader Unlocker v1.2.0 (Pro GUI Edition)
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 ![License](https://img.shields.io/badge/license-Proprietary-red.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-green.svg)
@@ -30,7 +30,7 @@ Bu proje, **[pwnj/auto-hyperos-unlocker](https://github.com/pwnj/auto-hyperos-un
 ### 🖥️ **Modern Arayüz**
 * **PyQt5 GUI:** Kullanımı kolay, profesyonel karanlık tema
 * **Canlı Log:** Renkli ve detaylı işlem günlüğü
-* 📁 **Kalıcı Log Sistemi (v1.1.0 YENİ!)** - Tüm işlemler `logs/` klasörüne kaydedilir
+* 📁 **Kalıcı Log Sistemi** - Tüm işlemler EXE'nin yanında `logs/` klasörüne kaydedilir
 * **System Tray:** Arka planda çalışma desteği
 * **Splash Screen:** MiuiTürkiye forum logosu ile profesyonel açılış
 
@@ -46,7 +46,7 @@ Bu proje, **[pwnj/auto-hyperos-unlocker](https://github.com/pwnj/auto-hyperos-un
 
 ### 🔑 **Otomatik Token Sistemi**
 * **Selenium Auto-Login:** Token ve User ID'yi otomatik çeker
-* **ChromeDriver Auto-Update:** Her çalıştırmada Chrome ile uyumlu driver indirilir
+* **ChromeDriver Auto-Manager:** webdriver-manager ile otomatik uyumlu sürüm indirme
 * **Bot Protection Bypass:** Gelişmiş Chrome seçenekleri ile bot algılama önleme
 * **Manuel Giriş:** İsteğe bağlı manuel token girişi
 * **Interactive CLI:** CLI versiyonunda interaktif token girişi
@@ -59,7 +59,7 @@ Bu proje, **[pwnj/auto-hyperos-unlocker](https://github.com/pwnj/auto-hyperos-un
 ### 💻 **Dual Mode**
 * **GUI Version:** Grafiksel arayüz ile kolay kullanım (önerilen)
 * **CLI Version:** Komut satırı için hafif versiyon
-* **Her iki versiyon da log kaydı yapıyor** (v1.1.0)
+* **Her iki versiyon da log kaydı yapıyor**
 
 ---
 
@@ -67,7 +67,7 @@ Bu proje, **[pwnj/auto-hyperos-unlocker](https://github.com/pwnj/auto-hyperos-un
 
 - [Kurulum](#-kurulum)
 - [Kullanım](#-kullanım-kılavuzu)
-- [Log Sistemi (YENİ)](#-log-sistemi-v110)
+- [Log Sistemi](#-log-sistemi-v120)
 - [Gelişmiş Ayarlar](#-gelişmiş-ayarlar)
 - [Sorun Giderme](#-sorun-giderme)
 - [Değişiklik Günlüğü](#-değişiklik-günlüğü)
@@ -170,11 +170,11 @@ python hyperosunlocker.py
 
 ---
 
-## 📁 Log Sistemi (v1.1.0) ⭐ YENİ
+## 📁 Log Sistemi (v1.2.0)
 
 ### Otomatik Log Kaydı
 
-Program çalıştığında **otomatik olarak** `logs/` klasörü oluşturur ve tüm işlemleri kaydeder.
+Program çalıştığında **EXE'nin yanında** otomatik olarak `logs/` klasörü oluşturur ve tüm işlemleri kaydeder.
 
 #### GUI Log Formatı:
 ```
@@ -287,7 +287,16 @@ findstr "Thread" logs\hyperosunlocker_20260210_143055.log
 
 ## 🔄 Değişiklik Günlüğü
 
-### **v1.1.0** - *10 Şubat 2026* ⭐ **GÜNCEL**
+### **v1.2.0** - *13 Şubat 2026* ⭐ **GÜNCEL**
+- 📂 Log klasörü konumu optimize edildi - EXE'nin yanında `logs/` oluşturulur
+- 🔧 ChromeDriver yönetimi iyileştirildi - webdriver-manager standart API kullanımı
+- 🛠️ EXE ve script modları için akıllı path detection (sys.frozen kontrolü)
+- 🚨 ChromeDriver hata raporlama detaylandırıldı (150 karakter mesaj)
+- 💡 Gelişmiş hata çözüm önerileri eklenildi
+- 🐛 cache_valid_range uyumluluk sorunu düzeltildi
+- 📝 README.md ChromeDriver dokümantasyonu güncellendi
+
+### **v1.1.0** - *10 Şubat 2026*
 - 📁 Kalıcı log sistemi - Tüm işlemler `logs/` klasörüne kaydedilir
 - 📊 Session lifecycle tracking (başlangıç/bitiş/hata logları)
 - 🧹 HTML tag cleaning - Log dosyalarında temiz metin
@@ -450,7 +459,7 @@ MiuiTürkiye Forum Üyesi
 
 *Made with ❤️ by SerdarOnline for MiuiTürkiye Community*
 
-**v1.1.0 - Kalıcı Log Sistemi ile Güçlendirildi!** 📁✨
+**v1.2.0 - Enhanced & Optimized!** 🚀✨
 
 ---
 
