@@ -96,13 +96,16 @@ class TokenFetcherThread(QThread):
             options.add_experimental_option('excludeSwitches', ['enable-logging', 'enable-automation'])
             options.add_experimental_option('useAutomationExtension', False)
             
-            # ChromeDriver'ı güncel sürümle kur (cache temizle)
+            # ChromeDriver'ı yükle ve kur
             try:
-                driver_path = ChromeDriverManager(cache_valid_range=0).install()
-                self.log_signal.emit("✅ ChromeDriver güncellendi", "success")
-            except Exception as driver_error:
-                self.log_signal.emit(f"⚠️ ChromeDriver otomatik güncellenemedi, varsayılan kullanılıyor", "warning")
+                self.log_signal.emit("📥 ChromeDriver indiriliyor...", "info")
                 driver_path = ChromeDriverManager().install()
+                self.log_signal.emit("✅ ChromeDriver hazır", "success")
+            except Exception as driver_error:
+                error_msg = str(driver_error)
+                self.log_signal.emit(f"❌ ChromeDriver yüklenemedi: {error_msg[:150]}", "error")
+                self.log_signal.emit("💡 Çözüm: Chrome tarayıcınızı güncelleyin veya cache temizleyin", "warning")
+                raise
             
             driver = webdriver.Chrome(
                 service=Service(driver_path), 
@@ -631,8 +634,15 @@ class HyperOSUnlockerGUI(QMainWindow):
         _check_author_integrity()  # Lisans kontrolü
         self.worker = None
         
-        # Log dosyası için hazırlık
-        log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+        # Log dosyası için hazırlık (EXE'nin yanında)
+        if getattr(sys, 'frozen', False):
+            # EXE olarak çalışıyor
+            base_dir = os.path.dirname(sys.executable)
+        else:
+            # Script olarak çalışıyor
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        log_dir = os.path.join(base_dir, "logs")
         os.makedirs(log_dir, exist_ok=True)
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -862,7 +872,7 @@ class HyperOSUnlockerGUI(QMainWindow):
         footer_layout.addStretch()
         
         # Versiyon
-        version_label = QLabel("v1.1.0")
+        version_label = QLabel("v1.1.1")
         version_label.setStyleSheet("""
             QLabel {
                 color: #3a7bd5;
@@ -883,7 +893,7 @@ class HyperOSUnlockerGUI(QMainWindow):
         self.setup_tray_icon()
         
         # Başlangıç log mesajları
-        self.add_log("🚀 Program başlatıldı - HyperOS Bootloader Unlocker v1.1.0", "success")
+        self.add_log("🚀 Program başlatıldı - HyperOS Bootloader Unlocker v1.1.1", "success")
         self.add_log(f"📁 Log dosyası: {self.log_file_path}", "info")
         self.add_log("ℹ️ Tüm işlem günlükleri otomatik olarak kaydediliyor", "info")
         
