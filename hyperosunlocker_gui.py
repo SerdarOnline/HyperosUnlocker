@@ -86,13 +86,26 @@ class TokenFetcherThread(QThread):
     def run(self):
         try:
             self.log_signal.emit("🌐 Tarayıcı açılıyor...", "info")
+            self.log_signal.emit("🔄 ChromeDriver güncelleniyor...", "info")
             
             options = webdriver.ChromeOptions()
             options.add_argument("--start-maximized")
-            options.add_experimental_option('excludeSwitches', ['enable-logging'])
+            options.add_argument("--disable-blink-features=AutomationControlled")
+            options.add_argument("--disable-dev-shm-usage")
+            options.add_argument("--no-sandbox")
+            options.add_experimental_option('excludeSwitches', ['enable-logging', 'enable-automation'])
+            options.add_experimental_option('useAutomationExtension', False)
+            
+            # ChromeDriver'ı güncel sürümle kur (cache temizle)
+            try:
+                driver_path = ChromeDriverManager(cache_valid_range=0).install()
+                self.log_signal.emit("✅ ChromeDriver güncellendi", "success")
+            except Exception as driver_error:
+                self.log_signal.emit(f"⚠️ ChromeDriver otomatik güncellenemedi, varsayılan kullanılıyor", "warning")
+                driver_path = ChromeDriverManager().install()
             
             driver = webdriver.Chrome(
-                service=Service(ChromeDriverManager().install()), 
+                service=Service(driver_path), 
                 options=options
             )
             
@@ -148,7 +161,29 @@ class TokenFetcherThread(QThread):
                 self.error_signal.emit(error_msg)
                 
         except Exception as e:
-            error_msg = f"Tarayıcı hatası: {str(e)}"
+            error_str = str(e)
+            
+            # ChromeDriver sürüm hatası kontrolü
+            if "This version of ChromeDriver only supports Chrome version" in error_str:
+                error_msg = (
+                    "ChromeDriver sürüm uyumsuzluğu!\n\n"
+                    "Çözüm:\n"
+                    "1. Programı tekrar çalıştırın (otomatik güncellenecek)\n"
+                    "2. Chrome tarayıcınızı güncelleyin\n"
+                    "3. ChromeDriver cache'ini manuel silin:\n"
+                    "   Windows: %USERPROFILE%\\.wdm\\drivers\\"
+                )
+            elif "session not created" in error_str:
+                error_msg = (
+                    "Tarayıcı oturumu oluşturulamadı!\n\n"
+                    "Çözüm:\n"
+                    "1. Chrome tarayıcısının kapalı olduğundan emin olun\n"
+                    "2. Programı tekrar başlatın\n"
+                    "3. Chrome'u güncelleyin"
+                )
+            else:
+                error_msg = f"Tarayıcı hatası: {error_str}"
+            
             self.log_signal.emit(f"❌ {error_msg}", "error")
             self.error_signal.emit(error_msg)
 
@@ -827,7 +862,7 @@ class HyperOSUnlockerGUI(QMainWindow):
         footer_layout.addStretch()
         
         # Versiyon
-        version_label = QLabel("v1.0.0")
+        version_label = QLabel("v1.1.0")
         version_label.setStyleSheet("""
             QLabel {
                 color: #3a7bd5;
@@ -848,7 +883,7 @@ class HyperOSUnlockerGUI(QMainWindow):
         self.setup_tray_icon()
         
         # Başlangıç log mesajları
-        self.add_log("🚀 Program başlatıldı - HyperOS Bootloader Unlocker v1.0.0", "success")
+        self.add_log("🚀 Program başlatıldı - HyperOS Bootloader Unlocker v1.1.0", "success")
         self.add_log(f"📁 Log dosyası: {self.log_file_path}", "info")
         self.add_log("ℹ️ Tüm işlem günlükleri otomatik olarak kaydediliyor", "info")
         
