@@ -46,6 +46,8 @@ Bu proje, **[pwnj/auto-hyperos-unlocker](https://github.com/pwnj/auto-hyperos-un
 
 ### 🔑 **Otomatik Token Sistemi**
 * **Selenium Auto-Login:** Token ve User ID'yi otomatik çeker
+* **ChromeDriver Auto-Update:** Her çalıştırmada Chrome ile uyumlu driver indirilir
+* **Bot Protection Bypass:** Gelişmiş Chrome seçenekleri ile bot algılama önleme
 * **Manuel Giriş:** İsteğe bağlı manuel token girişi
 * **Interactive CLI:** CLI versiyonunda interaktif token girişi
 
@@ -101,9 +103,9 @@ Bu proje, **[pwnj/auto-hyperos-unlocker](https://github.com/pwnj/auto-hyperos-un
    ```
 
 **Gerekli Paketler:**
-- `PyQt5` - GUI framework
-- `selenium` + `webdriver-manager` - Otomatik token alma
-- `urllib3`, `ntplib`, `pytz` - Network & Time sync
+- `PyQt5==5.15.10` - GUI framework
+- `selenium==4.16.0` + `webdriver-manager==4.0.2` - Otomatik token alma ve ChromeDriver yönetimi
+- `urllib3==2.1.0`, `ntplib==0.4.0`, `pytz==2024.1` - Network & Time sync
 
 ---
 
@@ -283,6 +285,42 @@ findstr "Thread" logs\hyperosunlocker_20260210_143055.log
 
 ---
 
+## 🔄 Değişiklik Günlüğü
+
+### **v1.1.0** - *10 Şubat 2026* ⭐ **GÜNCEL**
+- 📁 Kalıcı log sistemi - Tüm işlemler `logs/` klasörüne kaydedilir
+- 📊 Session lifecycle tracking (başlangıç/bitiş/hata logları)
+- 🧹 HTML tag cleaning - Log dosyalarında temiz metin
+- 💻 CLI versiyonunda da log desteği
+- 📝 Dual output (ekran + dosya)
+- 🔄 ChromeDriver otomatik güncelleme - Chrome tarayıcı sürümü ile tam uyum
+- 🛡️ Bot protection bypass - Gelişmiş Chrome seçenekleri
+- 🚨 Akıllı hata mesajları - ChromeDriver sorunları için detaylı çözümler
+- 📦 webdriver-manager 4.0.2 güncellemesi
+
+### **v1.0.0** - *9 Şubat 2026*
+- 🖥️ PyQt5 GUI ile profesyonel arayüz
+- 🔑 Selenium otomatik token alma
+- ⚡ Ping bazlı otomatik optimizasyon
+- 🔧 Gelişmiş ayarlar paneli
+- 🎬 MiuiTürkiye splash screen
+- 🔔 System tray desteği
+- 💻 CLI dual mode
+
+---
+
+## ⚠️ Feragatname (Disclaimer)
+
+Bu araç tamamen **eğitim amaçlı** ve Xiaomi'nin resmi başvuru sistemini kolaylaştırmak için yapılmıştır. 
+
+**Önemli Notlar:**
+- Hesabınızın başvuru kriterlerini karşılaması gerekir (30 günlük hesap, topluluk puanı vb.)
+- Aracın kullanımıyla ilgili sorumluluk kullanıcıya aittir
+- Herhangi bir cihaz hasarı, veri kaybı veya garanti kaybından geliştirici sorumlu değildir
+- Kullanım riski tamamen kullanıcıya aittir
+
+---
+
 ## 🎯 Başarı Sonrası
 
 ### Bootloader Kilidi Açma
@@ -309,115 +347,54 @@ findstr "Thread" logs\hyperosunlocker_20260210_143055.log
 
 ## ❓ Sorun Giderme
 
-### 🔴 **"TOKEN ayarlanmamış" Hatası**
-**Çözüm:** CLI versiyonunda interaktif menüden TOKEN girin veya kod içinde ayarlayın.
+### Yaygın Sorunlar ve Çözümleri:
 
-### 🔴 **"NTP Hatası" - Zaman Senkronizasyonu Başarısız**
-**Çözüm:**
+**🔴 "TOKEN ayarlanmamış" Hatası**
+- CLI versiyonunda interaktif menüden TOKEN girin veya kod içinde ayarlayın
+
+**🔴 "NTP Hatası" - Zaman Senkronizasyonu**
 - İnternet bağlantınızı kontrol edin
-- Firewall/Antivirus'ün NTP portunu (123/UDP) engellemediğinden emin olun
-- Farklı NTP sunucusu deneyin: `pool.ntp.org` yerine `time.google.com`
+- Firewall'un NTP portunu (123/UDP) engellemediğinden emin olun
 
-### 🔴 **"Kota Dolmuş (Quota Reached)"**
-**Çözüm:**
+**🔴 "Kota Dolmuş (Quota Reached)"**
 - Günlük kota limitine ulaşmışsınız
-- Ertesi gün tekrar deneyin
-- Bu program tam da bu kota sınırını atlamak için yapıldı - timing önemli
+- Bu program tam da bu sorunu çözmek için tasarlandı - timing çok önemli!
 
-### 🔴 **Yüksek Ping (>200ms)**
-**Çözüm:**
+**🔴 Yüksek Ping (>200ms)**
 - Feed Time değerini artırın: 600-750ms
-- Gelişmiş ayarlardan Thread Aralığını 10-15ms yapın
-- İnternet hızınızı kontrol edin
+- Thread Aralığını 10-15ms yapın
 - VPN kullanıyorsanız kapatın
 
-### 🔴 **Windows Defender SmartScreen Uyarısı**
-**Çözüm:**
-- "Daha fazla bilgi" linkine tıklayın
-- "Yine de çalıştır" butonuna basın
-- Kod açık kaynak - inceleyebilirsiniz
+**🔴 Windows Defender Uyarısı**
+- "Daha fazla bilgi" → "Yine de çalıştır"
+- Kod açık kaynak - incelenebilir
 
-### 🔴 **Antivirüs Yanlış Pozitif**
-**Çözüm:**
-- PyInstaller ile paketlenmiş tüm EXE'ler bazı antivirüsler tarafından şüpheli görülebilir
-- Kaynak koddan kendiniz derleyebilirsiniz: `python build_exe.py`
-- VirusTotal'de tarayabilirsiniz
-
-### 🔴 **Log Dosyası Oluşturulmuyor**
-**Çözüm:**
-- Program klasöründe yazma izni olduğundan emin olun
+**🔴 Log Dosyası Oluşturulmuyor**
+- Program klasöründe yazma izni kontrolü
 - Admin olarak çalıştırmayı deneyin
-- `logs/` klasörünü manuel oluşturun
 
-### 🔴 **Token Otomatik Alınmıyor**
-**Çözüm:**
-- Chrome ve ChromeDriver güncel olmalı
-- Xiaomi Community sitesinde düzgün giriş yapın
-- Manuel cookie yöntemini kullanın (F12 → Cookies)
+**🔴 "ChromeDriver only supports Chrome version X" Hatası**
+- webdriver-manager otomatik olarak uyumlu sürümü indirir
+- Eğer hata devam ederse:
+  1. Chrome tarayıcınızı güncelleyin: `chrome://settings/help`
+  2. ChromeDriver cache'ini manuel temizleyin:
+     ```powershell
+     Remove-Item -Recurse -Force "$env:USERPROFILE\.wdm\drivers\chromedriver"
+     ```
+  3. Programı tekrar çalıştırın
 
----
+**🔴 "Session Not Created" - Tarayıcı Başlatılamıyor**
+- webdriver-manager otomatik ChromeDriver yönetimi etkin
+- Windows Defender/Antivirus'ün Chrome'u engellemediğinden emin olun
+- Chrome tarayıcınızı güncelleyin: `chrome://settings/help`
 
-## 🔄 Değişiklik Günlüğü
+**🔴 Selenium "No module named 'email'" Hatası**
+- Python paketleri eksik, yeniden yükleyin:
+  ```bash
+  pip install --upgrade -r requirements.txt
+  ```
 
-### **v1.1.0** - *10 Şubat 2026* ⭐ **YENİ SÜRÜM**
-
-#### 🆕 Yeni Özellikler
-- 📁 **Kalıcı Log Sistemi** - Tüm işlemler `logs/` klasörüne kaydedilir
-- 📊 **Session Lifecycle Tracking** - Program başlangıç/bitiş/hata logları
-- 🧹 **HTML Tag Cleaning** - Log dosyalarında temiz metin formatı
-- 💡 **GUI Log Info Label** - Log dosya adı ve yolu bilgisi gösterimi
-- 💻 **CLI Log Support** - CLI versiyonunda da log kaydı (`hyperosunlocker_cli_*.log`)
-- 📝 **Dual Output System** - Hem ekranda renkli, hem dosyada düz metin
-
-#### 🔧 İyileştirmeler
-- Timestamped log dosyaları - her oturum unique isimle
-- Ctrl+C ile kapatmada bile log kaydedilir
-- Session separator ile oturumlar ayırt edilir
-- Program sonunda otomatik footer yazılır
-- Log dosyalarında emoji karakterler korunur
-
----
-
-### **v1.0.0** - *9 Şubat 2026*
-
-#### 🎉 İlk Stabil Sürüm
-- 🖥️ PyQt5 tabanlı modern GUI
-- 🔑 Selenium ile otomatik token alma
-- ⚡ Ping bazlı otomatik optimizasyon
-- 🔧 Gelişmiş ayarlar paneli
-- 📋 Renkli canlı log sistemi
-- 🎬 MiuiTürkiye forum splash screen
-- 🔔 System tray (bildirim alanı) desteği
-- 💻 CLI versiyon ile dual mode
-- 🌍 Singapur API endpoint desteği
-- 🔒 Lisans koruma sistemi
-- 🛡️ Kod bütünlük doğrulaması
-
----
-
-## 📊 Sistem Gereksinimleri
-
-### Minimum
-- **OS:** Windows 10 (64-bit)
-- **RAM:** 512 MB
-- **Disk:** 100 MB boş alan
-- **İnternet:** Aktif bağlantı
-
-### Önerilen
-- **OS:** Windows 11 (64-bit)
-- **RAM:** 1 GB
-- **İnternet:** 10+ Mbps hız, <100ms ping
-- **Python:** 3.8+ (kaynak kod için)
-
----
-
-## 🔒 Güvenlik
-
-- ✅ **Açık Kaynak** - Tüm kod GitHub'da incelenebilir
-- 🔐 **Telif Hakkı Korumalı** - Lisans doğrulama sistemi
-- 🛡️ **Kod Bütünlüğü** - MD5 hash ve Base64 imza kontrolü
-- 🔍 **Şeffaflık** - Hiçbir veri toplanmaz veya gönderilmez
-- 🚫 **Malware-Free** - VirusTotal temiz dosya
+> 💬 **Daha fazla yardım için:** [MiuiTürkiye Forum](https://forum.miuiturkiye.net/) üzerinden SerdarOnline'a mesaj gönderebilirsiniz.
 
 ---
 
@@ -425,23 +402,25 @@ findstr "Thread" logs\hyperosunlocker_20260210_143055.log
 
 **Copyright © 2026 SerdarOnline. Tüm hakları saklıdır.**
 
-### Kullanım Koşulları:
+Bu yazılım SerdarOnline tarafından geliştirilmiştir. Telif hakkı koruması altındadır.
 
-#### ✅ İzin Verilen:
-- Kişisel kullanım için ücretsiz
-- Kaynak kod incelenebilir
-- Eğitim amaçlı kullanım
-- MiuiTürkiye topluluğu içinde paylaşım
+**Kullanım Koşulları:**
+- ✅ Kişisel kullanım için ücretsiz
+- ✅ Kaynak kod incelenebilir
+- ❌ Ticari kullanım yasaktır
+- ❌ Kod değiştirme ve dağıtma yasaktır
+- ❌ Yazar bilgisi silinmesi yasaktır
 
-#### ❌ Yasak:
-- Ticari kullanım
-- Kod değiştirme ve yeniden dağıtma
-- Yazar bilgisini silme/değiştirme
-- Kopyalama ve farklı lisans ile yayınlama
-- Lisans koruma sistemini kaldırma
+---
 
-### Sorumluluk Reddi:
-Bu yazılım eğitim amaçlıdır. Herhangi bir cihaz hasarından, veri kaybından veya garanti kaybından geliştirici sorumlu değildir. Kullanım riski tamamen kullanıcıya aittir.
+## 🤝 Katkıda Bulunma
+
+Hataları bildirmek veya yeni özellikler eklemek için:
+- 🐛 **Bug Raporu:** GitHub Issues
+- 💬 **Öneriler:** [MiuiTürkiye Forum](https://forum.miuiturkiye.net/)
+- 💻 **Pull Request:** Katkılarınızı bekliyoruz
+
+**Main Repository:** [pwnj/auto-hyperos-unlocker](https://github.com/pwnj/auto-hyperos-unlocker)
 
 ---
 
@@ -456,33 +435,12 @@ MiuiTürkiye Forum Üyesi
 
 ---
 
-## 💬 Destek ve İletişim
-
-### Soru ve Sorun Bildirimi
-- 🌐 **Forum:** [MiuiTürkiye](https://forum.miuiturkiye.net/) üzerinden mesaj gönderin
-- 💬 **Özel Mesaj:** SerdarOnline'a forum PM
-- 🐛 **Bug Raporu:** GitHub Issues sayfası
-- 📝 **Log Paylaşımı:** Sorun bildirirken log dosyasını ekleyin
-
-### Topluluk
-- MiuiTürkiye forumunda tartışma konusu
-- Telegram grubu (yakında)
-- Discord sunucusu (planlanan)
-
----
-
 ## 🙏 Teşekkürler
 
-- **MiuiTürkiye Topluluğu** - Test, geri bildirim ve destek için
-- **Forum Üyeleri** - Önerileri ve bug raporları için
-- **Beta Testerlar** - Erken versiyonları test ettiği için
-- **Xiaomi Kullanıcıları** - Bootloader özgürlüğü için mücadele eden herkes
-
----
-
-## 🌟 Yıldız Verin!
-
-Bu projeyi beğendiyseniz GitHub'da ⭐ vermeyi unutmayın!
+- **[pwnj](https://github.com/pwnj)** - Orijinal proje ve API keşifleri için
+- **MiuiTürkiye Topluluğu** - Test ve geri bildirimler için
+- **Forum Üyeleri** - Destek ve öneriler için
+- **Xiaomi Kullanıcıları** - Bootloader özgürlüğü için mücadele edenler
 
 ---
 
@@ -492,11 +450,12 @@ Bu projeyi beğendiyseniz GitHub'da ⭐ vermeyi unutmayın!
 
 *Made with ❤️ by SerdarOnline for MiuiTürkiye Community*
 
-**v1.1.0 - Şimdi daha güçlü log sistemiyle!** 📁✨
+**v1.1.0 - Kalıcı Log Sistemi ile Güçlendirildi!** 📁✨
 
 ---
 
 [![MiuiTürkiye](https://img.shields.io/badge/MiuiTürkiye-Forum-FF6600?style=for-the-badge&logo=xiaomi)](https://forum.miuiturkiye.net/)
 [![SerdarOnline](https://img.shields.io/badge/Developer-SerdarOnline-blue?style=for-the-badge)](https://forum.miuiturkiye.net/uyeler/serdaronline.99036/)
+[![Original](https://img.shields.io/badge/Forked_from-pwnj-green?style=for-the-badge&logo=github)](https://github.com/pwnj/auto-hyperos-unlocker)
 
 </div>
